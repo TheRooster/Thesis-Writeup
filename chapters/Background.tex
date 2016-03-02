@@ -1,0 +1,9 @@
+Generating a depth map from a pair of stereo cameras involves 3 main steps.  First, each camera must be calibrated, a process that removes distortion and calculates several parameters useful in the later steps.  Second, the cameras must be rectified, which translates, rotates and skews the images such that the cameras appear to exist on the same plane.  Lastly, the images are then processed using a stereo block matching algorithm to find corresponding areas in each of the images.  From this correspondence, depth values can be estimated and written into a depth map.
+
+\section{Calibration}
+In order to calibrate a single camera, several things must be calculated.  These values are referred to as the Intrinsic and Extrinsic parameters of the camera.  The Intrinsic parameters of a camera relate the image coordinates to the Idealized image coordinates.  These values correct for the "Skewness" of the image.
+\subsection{Intrinsic Parameters}
+\subsection{Extrinsic Parameters}
+\section{Rectification}
+
+\section{Correspondence}

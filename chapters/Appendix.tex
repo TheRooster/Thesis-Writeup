@@ -1,0 +1,779 @@
+
+\section{Source Code}
+\subsubsection{stereo\_calibrate.cpp}
+\begin{verbatim}
+#include "opencv2/calib3d/calib3d.hpp"
+#include "opencv2/highgui/highgui.hpp"
+#include "opencv2/imgproc/imgproc.hpp"
+#include "opencv2/core/types.hpp"
+#include "opencv2/imgproc.hpp"
+#include "opencv2/ximgproc.hpp"
+
+#include <vector>
+#include <string>
+#include <algorithm>
+#include <iostream>
+#include <iterator>
+#include <stdio.h>
+#include <stdlib.h>
+#include <ctype.h>
+#include <fstream>
+
+
+
+
+using namespace cv;
+using namespace std;
+
+
+//CV Vars
+Mat camera1image1;
+Mat camera1image2;
+Mat camera2image1;
+Mat camera2image2;
+Size imSize;
+
+Mat distortionCoefficients[2]; //array of matrices for the distortion coefficients, one per camera
+Mat rotationMatrix; //a rotation matrix from one camera to the other
+Mat translationVector; //a translation vector from one camera to the other
+Mat essentialMatrix;
+Mat fundamentalMatrix;
+
+Mat cameraMatrices[2];
+Mat rotationMatrices[2];
+Mat projectionMatrices[2];
+Mat disparityToDepth;
+
+
+//Stereo BM object for creating disparity image
+Ptr<StereoBM> bm;
+
+Ptr<StereoSGBM> sgbm;
+
+//Our output disparity maps
+Mat disp, disp8, disparityVis;
+
+
+vector<Point3f> Create3DChessboardCoordinates(Size boardSize, float squareSize);
+
+
+
+int main(int argc, char *argv[]) {
+
+	//initialize the size of the board to 6x9
+	Size boardSize(6, 9);
+
+	//read in the image files
+	string camera1image1fn = "res/left01.jpg";
+	string camera1image2fn = "res/left02.jpg";
+	string camera2image1fn = "res/right01.jpg";
+	string camera2image2fn = "res/right02.jpg";
+
+
+
+
+	const float squareSize = 1.0f;
+
+	//read the images into openCV matrices
+	camera1image1 = imread(camera1image1fn, CV_LOAD_IMAGE_GRAYSCALE);
+	camera1image2 = imread(camera1image2fn, CV_LOAD_IMAGE_GRAYSCALE);
+	camera2image1 = imread(camera2image1fn, CV_LOAD_IMAGE_GRAYSCALE);
+	camera2image2 = imread(camera2image2fn, CV_LOAD_IMAGE_GRAYSCALE);
+
+	imSize = camera1image1.size();
+
+	//check that the sizes of the images are the same
+	if (camera1image2.size() != imSize || camera1image1.size() != imSize || camera2image2.size() != imSize)
+	{
+		std::cerr << "All images must be the same size!" << std::endl;
+		return -1;
+	}
+
+
+	//we know the images are the same size, now find the chessboard corners in the first image
+	//an array of arrays of points for the left camera, one array per image
+	vector<vector<Point2f> > camera1ImagePoints(2);
+	bool found = findChessboardCorners(camera1image1, boardSize, camera1ImagePoints[0]);//check to see if we can find the chessboard in the first image
+	if (!found)
+	{
+		cerr << "Corners not found in image 1,1" << endl;
+		exit(-1);
+	}
+
+	found = findChessboardCorners(camera1image2, boardSize, camera1ImagePoints[1]);
+	if (!found)
+	{
+		cerr << "Corners not found in image 1,2" << endl;
+		exit(-1);
+	}
+
+	//now the same for the right camera
+	vector<vector<Point2f> > camera2ImagePoints(2);
+	found = findChessboardCorners(camera2image1, boardSize, camera2ImagePoints[0]);//check to see if we can find the chessboard in the first image
+	if (!found)
+	{
+		cerr << "Corners not found in image 2,1" << endl;
+		exit(-1);
+	}
+
+	found = findChessboardCorners(camera2image2, boardSize, camera2ImagePoints[1]);
+	if (!found)
+	{
+		cerr << "Corners not found in image 2,2" << endl;
+		exit(-1);
+	}
+
+
+	//initialize our fake 3D coordinate system, one for each set of images
+	vector<vector<Point3f> > objectPoints(2);
+
+	//both are identical, because we're using the same chessboard in each
+	objectPoints[0] = Create3DChessboardCoordinates(boardSize, squareSize);
+	objectPoints[1] = Create3DChessboardCoordinates(boardSize, squareSize);
+	//init the initial camera matrices
+	cameraMatrices[0] = Mat::eye(3, 3, CV_64F); //3x3 identity matrix of 64bit floating point numbers(doubles)
+	cameraMatrices[1] = Mat::eye(3, 3, CV_64F);
+
+
+	//init the output matrices for the stereoCalibrate step
+
+
+	double error = stereoCalibrate(objectPoints, camera1ImagePoints, camera2ImagePoints,
+			cameraMatrices[0], distortionCoefficients[0],
+			cameraMatrices[1], distortionCoefficients[1],
+			imSize, rotationMatrix, translationVector,
+			essentialMatrix, fundamentalMatrix,
+			CV_CALIB_FIX_ASPECT_RATIO +
+			CV_CALIB_ZERO_TANGENT_DIST +
+			CV_CALIB_SAME_FOCAL_LENGTH +
+			CV_CALIB_RATIONAL_MODEL +
+			CV_CALIB_FIX_K3 +
+			CV_CALIB_FIX_K4 +
+			CV_CALIB_FIX_K5, TermCriteria(CV_TERMCRIT_ITER + CV_TERMCRIT_EPS, 100, 1e-5)); //Termination Criteria (Why move this between 2.4 and 3.0?)
+
+
+
+
+	//now we have the right parameters to rectify the images
+	stereoRectify(cameraMatrices[0], distortionCoefficients[0], cameraMatrices[1], distortionCoefficients[1],
+			imSize, rotationMatrix, translationVector, rotationMatrices[0], rotationMatrices[1], projectionMatrices[0], projectionMatrices[1],
+			disparityToDepth, 0, 0, cvSize(0, 0));
+
+
+	ofstream outfile;
+	outfile.open("res/CalibrationInfo.txt");
+	outfile<< imSize.height << ' ' << imSize.width << endl << endl;
+	//camera matrices
+	for(int i = 0; i < 3; i ++){
+		for(int j = 0; j < 3; j ++){
+			outfile<< cameraMatrices[0].at<double>(i,j) << ' ';
+		}
+		outfile << endl;
+	}
+	outfile << endl;
+	for(int i = 0; i < 3; i ++){
+		for(int j = 0; j < 3; j ++){
+			outfile<< cameraMatrices[1].at<double>(i,j) << ' ';
+		}
+		outfile << endl;
+	}
+	outfile << endl;
+	//rotation matrices
+	for(int i = 0; i < 3; i ++){
+		for(int j = 0; j < 3; j ++){
+			outfile<< rotationMatrices[0].at<double>(i,j) << ' ';
+		}
+		outfile << endl;
+	}
+	outfile << endl;
+
+	for(int i = 0; i < 3; i ++){
+		for(int j = 0; j < 3; j ++){
+			outfile<< rotationMatrices[1].at<double>(i,j) << ' ';
+		}
+		outfile << endl;
+	}
+	outfile << endl;
+
+	//projection matrices
+	for(int i = 0; i < 3; i ++){
+		for(int j = 0; j < 4; j ++){
+			outfile<< projectionMatrices[0].at<double>(i,j) << ' ';
+		}
+		outfile << endl;
+	}
+	outfile << endl;
+
+	for(int i = 0; i < 3; i ++){
+		for(int j = 0; j < 4; j ++){
+			outfile<< projectionMatrices[1].at<double>(i,j) << ' ';
+		}
+		outfile << endl;
+	}
+	outfile << endl;
+
+	//distortion coeffiicients
+	for(int i = 0; i < 8; i ++){
+
+		outfile<< distortionCoefficients[0].at<double>(i) << endl;
+	}
+	outfile << endl;
+
+	for(int i = 0; i < 8; i ++){
+
+		outfile<< distortionCoefficients[1].at<double>(i) << endl;
+	}
+	outfile << endl;
+
+	outfile.close();
+
+	return 0;
+
+}
+
+
+vector<Point3f> Create3DChessboardCoordinates(Size boardSize, float squareSize) {
+
+	//create a vector of coordinates
+	std::vector<Point3f> corners;
+
+	for (int i = 0; i < boardSize.height; i++)
+	{
+		for (int j = 0; j < boardSize.width; j++)
+		{
+			//push the individual coordinates of the chessboard corners
+			//its a 3D point, so we assume that all points lay on the 0 z plane
+			corners.push_back(Point3f(float(j*squareSize),float(i*squareSize), 0));
+		}
+	}
+
+	return corners;
+}
+\end{verbatim}
+
+\subsubsection{CVRectify.cpp}
+\begin{verbatim}
+#include "opencv2/calib3d/calib3d.hpp"
+#include "opencv2/highgui/highgui.hpp"
+#include "opencv2/imgproc/imgproc.hpp"
+#include "opencv2/core/types.hpp"
+#include "opencv2/imgproc.hpp"
+#include "opencv2/ximgproc.hpp"
+
+#include <iostream>
+#include <fstream>
+
+
+using namespace cv;
+using namespace std;
+
+Mat camera1image;
+Mat camera2image;
+Size imSize;
+Mat cameraMatrices[2];
+Mat rotationMatrices[2];
+Mat projectionMatrices[2];
+Mat distortionCoefficients[2];
+
+Ptr<StereoBM> bm;
+Ptr<StereoSGBM> sgbm;
+
+
+void Init_SBM();
+void Init_SGBM();
+
+int main(){
+	//open file and read in values
+	std::ifstream infile;
+	infile.open("res/CalibrationInfo.txt");
+	int w, h;
+	//image size
+	infile >> h >> w ;
+	imSize.height = h;
+	imSize.width = w;
+
+	double a, b, c;
+	double arr[3][3];
+	//camera matrices
+	for(int i = 0; i < 3; i ++){
+		infile >> a >> b >> c;
+		arr[i][0] = a;
+		arr[i][1] = b;
+		arr[i][2] = c;
+	}
+	cameraMatrices[0] = Mat(3, 3, CV_64F, arr);
+
+	double arr1[3][3];
+	for(int i = 0; i < 3; i ++){
+		infile >> a >> b >> c;
+		arr1[i][0] = a;
+		arr1[i][1] = b;
+		arr1[i][2] = c;
+	}
+	cameraMatrices[1] = Mat(3, 3, CV_64F, arr1);
+
+	//rotation matrices
+	double arr2[3][3];
+	for(int i = 0; i < 3; i ++){
+		infile >> a >> b >> c;
+		arr2[i][0] = a;
+		arr2[i][1] = b;
+		arr2[i][2] = c;
+	}
+	rotationMatrices[0] = Mat(3, 3, CV_64F, arr2);
+
+	double arr3[3][3];
+	for(int i = 0; i < 3; i ++){
+		infile >> a >> b >> c;
+		arr3[i][0] = a;
+		arr3[i][1] = b;
+		arr3[i][2] = c;
+	}
+	rotationMatrices[1] = Mat(3, 3, CV_64F, arr3);
+	//projection matrices
+	double d;
+	double arr4[3][4];
+	for(int i = 0; i < 3; i ++){
+		infile >> a >> b >> c >> d;
+		arr4[i][0] = a;
+		arr4[i][1] = b;
+		arr4[i][2] = c;
+		arr4[i][3] = d;
+	}
+	projectionMatrices[0] = Mat(3, 4, CV_64F, arr4);
+
+	double arr5[3][4];
+	for(int i = 0; i < 3; i ++){
+		infile >> a >> b >> c >> d;
+		arr5[i][0] = a;
+		arr5[i][1] = b;
+		arr5[i][2] = c;
+		arr5[i][3] = d;
+	}
+	projectionMatrices[1] = Mat(3, 4, CV_64F, arr5);
+
+	//distortion coefficients
+	double arr6[8];
+	for(int i = 0; i < 8; i ++)
+	{
+		infile >> arr6[i];
+	}
+
+	distortionCoefficients[0] = Mat(8, 1, CV_64F, arr6);
+
+	double arr7[8];
+	for(int i = 0; i < 8; i ++)
+	{
+		infile >> arr7[i];
+	}
+
+	distortionCoefficients[1] = Mat(8, 1, CV_64F, arr7);
+
+	cout << imSize << endl;
+	cout << cameraMatrices[0] << endl;
+	cout << cameraMatrices[1] << endl;
+	cout << rotationMatrices[0] << endl;
+	cout << rotationMatrices[1] << endl;
+	cout << projectionMatrices[0] << endl;
+	cout << projectionMatrices[1] << endl;
+	cout << distortionCoefficients[0] << endl;
+	cout << distortionCoefficients[1] << endl;
+	infile.close();
+
+//Mats used for remapping images to their rectified selves
+	Mat map11, map12, map21, map22;
+	initUndistortRectifyMap(cameraMatrices[0], distortionCoefficients[0], rotationMatrices[0], projectionMatrices[0], imSize, CV_16SC2, map11, map12);
+	initUndistortRectifyMap(cameraMatrices[1], distortionCoefficients[1], rotationMatrices[1], projectionMatrices[1], imSize, CV_16SC2, map21, map22);
+
+	//init the Stereo Block Matcher, needs only be done once
+	Init_SBM();
+
+	Mat img1rectified, img2rectified, disp, dispVis;
+	namedWindow("Disparity Map", 1);
+
+	//while(true){
+			
+		camera1image = imread("res/left02.jpg", CV_LOAD_IMAGE_GRAYSCALE);
+		camera2image = imread("res/right02.jpg", CV_LOAD_IMAGE_GRAYSCALE);
+		
+		remap(camera1image, img1rectified, map11, map12, INTER_LINEAR);
+		remap(camera2image, img2rectified, map21, map22, INTER_LINEAR);
+
+		//Calc the Disparity map using Stereo BlockMatching
+		bm->compute(img1rectified, img2rectified, disp);
+		cv::ximgproc::getDisparityVis(disp, dispVis, 1.0);
+		imshow("Disparity Map", dispVis);
+		waitKey(0);
+	//}
+}
+
+void Init_SBM(){
+	bm = StereoBM::create(64, 11); //create the StereoBM Object
+
+	//bm->setROI1(); //usable area in rectified image
+	//bm->setROI2(roi2);
+	bm->setPreFilterCap(31);
+	//bm->setBlockSize(9); //block size to check
+	//	bm->setMinDisparity(-32);
+	bm->setNumDisparities(128); //number of disparities
+	bm->setTextureThreshold(32);
+	//	bm->setUniquenessRatio(15);
+	bm->setSpeckleWindowSize(96);
+	bm->setSpeckleRange(64);
+	//	bm->setDisp12MaxDiff(1);
+
+}
+
+
+void Init_SGBM(){
+	sgbm = StereoSGBM::create(0, 16, 3); //create the StereoBM Object
+
+
+	sgbm->setPreFilterCap(63);
+	sgbm->setBlockSize(3);
+	sgbm->setP1(72);
+	sgbm->setP2(256);
+	sgbm->setMinDisparity(0);
+	sgbm->setNumDisparities(192);
+	sgbm->setUniquenessRatio(10);
+	sgbm->setSpeckleRange(8);
+	sgbm->setDisp12MaxDiff(1);
+
+
+}
+\end{verbatim}
+\subsubsection{GLRectify.cpp}
+\begin{verbatim}
+#include <iostream>
+#include <fstream>
+#include <vector>
+
+#include <IL/il.h>
+#include <IL/ilu.h>
+#include <IL/ilut.h>
+
+#include "Common/esUtil.h"
+#include "glm/glm.hpp"
+
+#define DEBUG 0
+
+using namespace std;
+using namespace glm;
+
+unsigned int imHeight, imWidth;
+//Needed GL Vars
+mat3 camera1;
+mat3 camera2;
+
+mat3 rotation1;
+mat3 rotation2;
+
+mat3x4 projection1;
+mat3x4 projection2;
+
+//IL stuff
+ILuint ImgId;
+
+typedef struct
+{
+	// Handle to a program object
+	GLuint rectifyProgramObject;
+	GLuint disparityProgramObject;
+
+
+	// Attribute locations
+	GLint  positionLoc;
+	GLint  colorLoc;
+
+	//vertex data
+	GLfloat *vertices;
+	GLubyte * colors;
+	GLuint * indices;
+	int numIndices;
+
+} UserData;
+
+
+void Draw ( ESContext *esContext );
+int Init ( ESContext *esContext );
+GLfloat * init_VertexInfo();
+GLubyte * init_VertexColors(char * filename);
+GLuint * genIndices(int picWidth, int picHeight, int * numIndices);
+GLuint CreateSimpleTexture2D( );
+void ShutDown ( ESContext *esContext );
+
+int main(int argc, char ** argv){
+
+
+	//open file and read in values
+	std::ifstream infile;
+	infile.open("res/CalibrationInfo.txt");
+
+	infile >> imHeight >> imWidth;
+
+
+	double a, b, c;
+	//camera matrices
+	for(int i = 0; i < 3; i ++){
+		infile >> a >> b >> c;
+		camera1[i][0] = a;
+		camera1[i][1] = b;
+		camera1[i][2] = c;
+	}
+
+	for(int i = 0; i < 3; i ++){
+		infile >> a >> b >> c;
+		camera2[i][0] = a;
+		camera2[i][1] = b;
+		camera2[i][2] = c;
+	}
+
+	//rotation matrices
+	for(int i = 0; i < 3; i ++){
+		infile >> a >> b >> c;
+		rotation1[i][0] = a;
+		rotation1[i][1] = b;
+		rotation1[i][2] = c;
+	}
+
+	for(int i = 0; i < 3; i ++){
+		infile >> a >> b >> c;
+		rotation2[i][0] = a;
+		rotation2[i][1] = b;
+		rotation2[i][2] = c;
+	}
+
+	//projection matrices
+	double d;
+	for(int i = 0; i < 3; i ++){
+		infile >> a >> b >> c >> d;
+		projection1[i][0] = a;
+		projection1[i][1] = b;
+		projection1[i][2] = c;
+		projection1[i][3] = d;
+	}
+
+	for(int i = 0; i < 3; i ++){
+		infile >> a >> b >> c >> d;
+		projection2[i][0] = a;
+		projection2[i][1] = b;
+		projection2[i][2] = c;
+		projection2[i][3] = d;
+	}
+
+	infile.close();
+#if DEBUG
+	cout << glm::to_string(camera1) << endl;
+	cout << glm::to_string(camera2) << endl;
+	cout << glm::to_string(rotation1) << endl;
+	cout << glm::to_string(rotation2) << endl;
+	cout << glm::to_string(projection1) << endl;
+	cout << glm::to_string(projection2) << endl;
+#endif
+
+
+	//done reading in needed vars, now lets init our OpenGl Stuff
+	ESContext esContext;
+	UserData  userData;
+
+	esInitContext ( &esContext );
+	esContext.userData = &userData;
+
+	esCreateWindow ( &esContext, "Simple Texture 2D", imWidth, imHeight, ES_WINDOW_RGB );
+
+	if ( !Init ( &esContext ) )
+		return 0;
+
+	esRegisterDrawFunc ( &esContext, Draw );
+
+	esMainLoop ( &esContext );
+
+	ShutDown ( &esContext );
+}
+
+void Draw ( ESContext *esContext )
+{
+	UserData *userData =(UserData *)(esContext->userData);
+
+	// Set the viewport
+	glViewport ( 0, 0, esContext->width, esContext->height );
+
+	// Clear the color buffer
+	glClear ( GL_COLOR_BUFFER_BIT );
+
+	// Use the program object
+	glUseProgram ( userData->rectifyProgramObject );
+
+	// Load the vertex position
+	glVertexAttribPointer ( userData->positionLoc, 4, GL_FLOAT,
+			GL_FALSE, 1, userData -> vertices);
+	// Load the texture coordinate
+	glVertexAttribPointer ( userData->colorLoc, 3, GL_BYTE,
+			GL_FALSE, 1, userData -> colors);
+
+	glEnableVertexAttribArray ( userData->positionLoc );
+	glEnableVertexAttribArray ( userData->colorLoc );
+
+
+	glDrawElements ( GL_TRIANGLES, userData->numIndices, GL_UNSIGNED_INT, userData->indices );
+	eglSwapBuffers(esContext->eglDisplay, esContext->eglSurface);
+}
+
+int Init ( ESContext *esContext )
+{
+	//init the img data
+	ilInit();
+	ilGenImages(1, &ImgId);
+
+
+	esContext->userData = malloc(sizeof(UserData));
+	UserData *userData = (UserData *)(esContext->userData);
+
+	GLbyte vShaderStr[] =
+			"uniform mat4 transformMatrix; \n"
+			"uniform mat4 projectionMatrix;\n"
+			"uniform mat4 cameraMatrix;    \n"
+			"attribute vec4 a_Position;    \n"
+			"attribute vec3 a_Color;    \n"
+			"varying vec3 v_Color;      \n"
+			"void main()                   \n"
+			"{                             \n"
+			"   gl_Position = a_Position;  \n"
+			"   v_Color = a_Color;   \n"
+			"}                             \n";
+
+	GLbyte fShaderStr[] =
+			"precision mediump float;                            \n"
+			"varying vec3 v_Color;                               \n"
+			"void main()                                         \n"
+			"{                                                   \n"
+			"    gl_FragColor = vec4(1.0,1.0,1.0,1.0);           \n"
+			"}                                                   \n";
+
+	// Load the shaders and get a linked program object
+	userData->rectifyProgramObject = esLoadProgram ((char *)vShaderStr, (char *)fShaderStr );
+
+	// Get the attribute locations
+	userData->positionLoc = glGetAttribLocation ( userData->rectifyProgramObject, "a_Position" );
+	userData->colorLoc = glGetAttribLocation ( userData->rectifyProgramObject, "a_Color" );
+
+	glClearColor ( 0.39f, 0.58f, 0.92f, 1.0f );
+
+	userData -> vertices =init_VertexInfo();
+	userData -> indices =genIndices(imWidth, imHeight, &(userData->numIndices));
+	userData -> colors = init_VertexColors("res/left01.jpg");
+	return GL_TRUE;
+}
+
+
+GLfloat * init_VertexInfo(){
+
+	GLfloat * tmpVertexInfo = (GLfloat *)malloc(imWidth * imHeight * 4 * sizeof(GLfloat));//init memory for positions
+
+
+	//indices = genIndices(imWidth, imHeight);
+
+	for(int i = 0; i < imHeight; i ++){
+		for(int j = 0; j < imWidth * 4; j+=4){
+			int loc = (i*imWidth*4) + j;
+			tmpVertexInfo[loc] = ((GLfloat)j/4) / imWidth;
+			tmpVertexInfo[loc + 1] = ((GLfloat)i )/ imHeight;
+			tmpVertexInfo[loc + 2] = 1.0f;
+			tmpVertexInfo[loc + 3] = 1.0f;
+		}
+
+	}
+
+
+	return tmpVertexInfo;
+}
+
+
+GLubyte * init_VertexColors(char * filename){
+
+	ilBindImage(ImgId);
+	ilLoadImage(filename);
+	ILubyte * tmp = ilGetData();
+
+	/*for(int i = 0; 640 * 480 * 3; i +=3){
+		cout << '[' << (int)tmp[i] << ' ' << (int)tmp[i+1] << ' ' << (int)tmp[i+2] << ']' << endl;
+	}*/
+	cout << "image Loaded" << endl;
+	return (GLubyte *)tmp;
+}
+
+GLuint * genIndices(int picWidth, int picHeight, int * numIndices){
+	vector<int> temp;
+
+	for(int i = 0; i < picHeight; i ++){
+		for(int j = 0; j < picWidth -1; j++){
+			if(i %2 == 0){//even rows
+				temp.push_back(i * picWidth + j);
+				temp.push_back((i * picWidth) + j + picWidth);
+				temp.push_back(i * picWidth + j + 1);
+			}
+			else{ //odd rows
+				temp.push_back(i * picWidth + j);
+				temp.push_back(i * picWidth + j + 1);
+				temp.push_back((i-1) * picWidth + j);
+			}
+		}
+
+	}
+	*numIndices = temp.size();
+
+	GLuint * indices = (GLuint *)malloc(temp.size() * sizeof(GLint));
+	for(int i = 0; i < temp.size(); i ++){
+		indices[i] = temp[i];
+	}
+	return indices;
+}
+
+void ShutDown ( ESContext *esContext )
+{
+	UserData *userData =(UserData *)(esContext->userData);
+
+
+	// Delete program object
+	glDeleteProgram ( userData->rectifyProgramObject );
+
+	free(esContext->userData);
+}
+\end{verbatim}
+\subsubsection{rectify.vs}
+\begin{verbatim}
+#version 120
+//"Vertex" shader to rectify the left and right image.
+//takes as input the transformation matrix generated by stereoRectify()
+
+uniform mat4 transformMatrix;
+uniform mat4 projectionMatrix;
+
+attribute vec2 vertexPosition;
+
+varying vec2 texCoord;
+
+
+main(){
+	//put our 2 coordinates into a vec4 and then multiply by our rectification matrix.
+	gl_position = vec4(vertexPosition, 1.0f, 1.0f) * transformMatrix * projectionMatrix;
+}
+\end{verbatim}
+\subsubsection{rectify.fs}
+\begin{verbatim}
+#version 120
+//Simple Texturing shader for rectifying
+
+
+varying vec2 texCoord;
+
+uniform sampler2D Tex1;
+
+main(){
+
+	gl_fragColor = texture(Tex1, texCoord);
+}
+\end{verbatim}
+\subsubsection{disparity.vs}
+
+\subsubsection{disparity.fs}

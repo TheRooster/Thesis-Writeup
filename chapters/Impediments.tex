@@ -1,0 +1,14 @@
+
+Over the course of this project there were several things that caused stalls or rewrites of portions of the project.  I will briefly outline them below.
+
+\section{openCL}
+The initial plan involved using OpenCL, a Graphics programming library that allows arbitrary code to be executed on the GPU.  I had had experience working with CUDA, a similar library, and believed that this experience would translate well to OpenCL.  The hardware chosen for this project, however, had no OpenCL compatible drivers.  While writing an OpenCL layer would have been possible due to the release of the hardware specifications for the Raspberry Pi 2's GPU by Broadcom, the work required is way beyond the scope of this project.  At the time of writing, however, A library does exist that provides a way to run arbitrary code on the Pi's GPU.  It is of little use in this case though as it would require a ground up rewrite.
+
+\section{openGL}
+With the option of OpenCL unavailable, The focus instead turned to OpenGL.  OpenGL is a well known library and has a large amount of historical support.  It is well supported on the pi with a few caveats.
+\subsection{OpenGL ES}
+The version of OpenGL that is supported on the Pi is OpenGL ES 2.0.  This is a good thing as it allows access to the programmable graphics pipeline, which I could hijack for my own uses.  It brings with it it's own issues however, as the API is similar but not identical to OpenGL 3.0.  In addition, OpenGL ES does not support certain features of desktop OpenGL that make programming easier.
+\subsection{Transform Feedback}
+After the decision was made to switch to OpenGL for the GPU portion of this project, The use of Transform Feedback was explored.  Transform Feedback it the process by which the result of the Vertex Shader can be retrieved before it is sent to the Fragment Shader.  This would have made the code much simpler as the rectification could have been done by a single Vertex Shader and returned to the program.  Transform feedback is supported in OpenGL ES 3.0, so support on the Pi was nonexistant.  This resulted in needing two different shaders to accomplish what could have been done in 1.
+\subsection{X.org}
+X.org is the graphical layer used by linux distributions to provide a windowing system that applications render into.  There are many OpenGL Libraries that interact well with X.org such as freeGLUT, glew and glm.  However, on the Pi, X.org is not GPU accelerated.  This means that while OpenGL code can be run in these windows it is enabled by a software renderer.  For hardware rendering on the Pi requires the use of the DispManX api which has many fewer helper libraries, and is officially deprecated.  This was discovered late in the project and forced a partial rewrite to conform to this api.

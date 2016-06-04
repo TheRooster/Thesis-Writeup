@@ -1,0 +1,32 @@
+\contentsline {chapter}{\numberline {1}Abstract}{4}
+\contentsline {chapter}{\numberline {2}Introduction}{5}
+\contentsline {chapter}{\numberline {3}Background}{7}
+\contentsline {section}{\numberline {3.1}Calibration}{7}
+\contentsline {subsection}{\numberline {3.1.1}Intrinsic Parameters}{8}
+\contentsline {subsubsection}{Skew}{8}
+\contentsline {subsection}{\numberline {3.1.2}Extrinsic Parameters}{11}
+\contentsline {section}{\numberline {3.2}Rectification}{11}
+\contentsline {subsection}{\numberline {3.2.1}Epipolar Geometry}{11}
+\contentsline {subsection}{\numberline {3.2.2}Rectification}{12}
+\contentsline {section}{\numberline {3.3}Correspondence}{12}
+\contentsline {chapter}{\numberline {4}Process}{14}
+\contentsline {section}{\numberline {4.1}Hardware}{14}
+\contentsline {section}{\numberline {4.2}Data}{14}
+\contentsline {section}{\numberline {4.3}Process}{14}
+\contentsline {chapter}{\numberline {5}Results}{17}
+\contentsline {section}{\numberline {5.1}Timings}{17}
+\contentsline {chapter}{\numberline {6}Hindrance}{18}
+\contentsline {subsection}{\numberline {6.0.1}openCL}{18}
+\contentsline {subsection}{\numberline {6.0.2}openGL}{19}
+\contentsline {subsubsection}{OpenGL ES}{19}
+\contentsline {subsubsection}{Transform Feedback}{19}
+\contentsline {subsubsection}{X.org}{19}
+\contentsline {chapter}{\numberline {A}Appendix}{21}
+\contentsline {section}{\numberline {A.1}Source Code}{21}
+\contentsline {subsubsection}{stereo\_calibrate.cpp}{21}
+\contentsline {subsubsection}{CVRectify.cpp}{30}
+\contentsline {subsubsection}{GLRectify.cpp}{37}
+\contentsline {subsubsection}{rectify.vs}{48}
+\contentsline {subsubsection}{rectify.fs}{49}
+\contentsline {subsubsection}{disparity.vs}{49}
+\contentsline {subsubsection}{disparity.fs}{49}

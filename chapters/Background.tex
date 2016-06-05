@@ -6,12 +6,22 @@ In order to calibrate a single camera, several things must be calculated.  These
 
 
 \subsection{Intrinsic Parameters}
-\includegraphics[width=\textwidth]{Image1}
 
-Consider the image above, where $x$ and $y$ refer to a single position in "world space", $\hat{u}$ and $\hat{v}$ refer to that same position on the normalized image plane, and $u$ and $v$ refer to that position on the physical image plane.  This is what is known as the "Pinhole Camera Model", as all points on the physical image plane can be thought of as having been projected through a point of size 0 existing somewhere in worldspace.  One thing to note here is that $\hat{u}$ and $\hat{v}$ can be calculated by $x/z$ and $y/z$ respectively.
+\begin{figure}[h!]
+  \includegraphics[scale=.5]{Image1}
+  \caption{Pinhole Camera Model}
+  \label{fig:Pinhole}
+\end{figure}
+
+
+Consider Figure \ref{fig:Pinhole}, where $x$ and $y$ refer to a single position in "world space", $\hat{u}$ and $\hat{v}$ refer to that same position on the normalized image plane, and $u$ and $v$ refer to that position on the physical image plane.  This is what is known as the "Pinhole Camera Model", as all points on the physical image plane can be thought of as having been projected through a point of size 0 existing somewhere in worldspace.  One thing to note here is that $\hat{u}$ and $\hat{v}$ can be calculated by $x/z$ and $y/z$ respectively.
 \subsubsection{Skew}
-The first calculation of the intrinsic camera parameters deals with the "skew" of the image.  As can be observed in IMAGE2, the physical image plane may not be a perfect rectangle.  Due to defects in craftmanship and/or wear and tear on the camera, the physical image plane may be a parallelogram.  In this case, we can relate x and y to u and v via the calculation of $u=\hat{u}-\frac{y}{z} * \frac{sin  \theta }{ cos \theta} * f$ and $v=\hat{v}*\frac{1}{sin \theta} * f$ respectively, where $\theta$ is the angle between the perpendicular axis and the observed axis and $f$ is the focal length of the camera.
-\includegraphics[width=\textwidth]{Image2}
+The first calculation of the intrinsic camera parameters deals with the "skew" of the image.  As can be observed in Figure \ref{fig:Skew}, the physical image plane may not be a perfect rectangle.  Due to defects in craftmanship and/or wear and tear on the camera, the physical image plane may be a parallelogram.  In this case, we can relate x and y to u and v via the calculation of $u=\hat{u}-\frac{y}{z} * \frac{sin  \theta }{ cos \theta} * f$ and $v=\hat{v}*\frac{1}{sin \theta} * f$ respectively, where $\theta$ is the angle between the perpendicular axis and the observed axis and $f$ is the focal length of the camera.
+\begin{figure}[h!]
+	\includegraphics[scale=.5]{Image2}
+	\caption{Image Skew}
+	\label{fig:Skew}
+\end{figure}
 In addition to the physical image plane not being rectangular, it may also not be aligned with the idealized image plane.  To
 account for this we introduce 2 new values $u_0$ and $v_0$ to account for this misalignment.  This means that our 
 calculation becomes $u=\hat{u}-\frac{y}{z} * cot \theta * f + u_0$ and $v=\hat{v} * \frac{1}{sin \theta} * f + 

@@ -5,8 +5,21 @@
 \usepackage{setspace}
 \usepackage{amsmath}
 \usepackage{graphicx}
+\usepackage{ragged2e}
+\usepackage{soul}
 
-\renewcommand{\chaptername}{}
+\usepackage{fancyhdr} 
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyheadoffset{0cm}
+\renewcommand{\headrulewidth}{0pt} 
+\renewcommand{\footrulewidth}{0pt}
+\fancyhead[R]{\thepage}
+\fancypagestyle{plain}{%
+  \fancyhf{}%
+  \fancyhead[R]{\thepage}%
+}
 
 \DeclareGraphicsExtensions{.pdf,.png,.jpg}
 
@@ -38,7 +51,7 @@
 	Jonathan A. Roster\\
 	Winter 2016
 \end{center}
-
+\pagenumbering{roman}
 \newpage
 \vspace{.75in}
 \begin{center}
@@ -46,29 +59,46 @@ THESIS OF JONATHAN ROSTER APPROVED BY
 \end{center}
 \vspace{1.5in}
 \begin{center}
-\makebox[3in]{\hrulefill}Date\makebox[1.0in]{\hrulefill}\\
+\makebox[3in]{\hrulefill} Date\makebox[1.0in]{\hrulefill}\\
 YUN TIAN, PhD, GRADUATE STUDY COMMITTEE
 
 \vspace{.75in}
 
-\makebox[3in]{\hrulefill}Date\makebox[1.0in]{\hrulefill}\\
+\makebox[3in]{\hrulefill} Date\makebox[1.0in]{\hrulefill}\\
 KOSUKE IMMAMURA, PhD, GRADUATE STUDY COMMITTEE
 
 \vspace{.75in}
 
-\makebox[3in]{\hrulefill}Date\makebox[1.0in]{\hrulefill}\\
+\makebox[3in]{\hrulefill} Date\makebox[1.0in]{\hrulefill}\\
 PAUL SPREULL, MS, GRADUATE STUDY COMMITTEE
 \end{center}
 
+
+\newpage
+\begin{center}
+\underline{MASTER'S THESIS}\\
+\end{center}
+\begin{justify}
+In presenting this thesis in partial fulfillment of the requirements for a master’s degree
+at Eastern Washington University, I agree that the JFK Library shall make copies freely
+available for inspection. I further agree that copying of this project in whole or in part
+is allowable only for scholarly purposes. \ul{It is understood, however, that any copying or publication of this thesis for commercial purposes, or for financial gain, shall not be allowed without my written permission.}
+\end{justify}
+\begin{center}
+\makebox[2.5in]{Signature\hrulefill}
+\makebox[2.5in]{Date\hrulefill}
+\end{center}
 \singlespace
-\pagenumbering{roman}
+
+
+
+\chapter{Abstract}
+\input{chapters/Abstract}
+
 \tableofcontents
 \listoffigures
 \listoftables
 \pagenumbering{arabic}
-
-\chapter{Abstract}
-\input{chapters/Abstract}
 
 \chapter{Introduction}
 \input{chapters/Introduction}
@@ -76,7 +106,10 @@ PAUL SPREULL, MS, GRADUATE STUDY COMMITTEE
 \chapter{Background}
 \input{chapters/Background}
 
-\chapter{Process}
+\chapter{Related Work}
+\input{chapters/RelatedWork}
+
+\chapter{Methodology}
 \input{chapters/Process}
 
 

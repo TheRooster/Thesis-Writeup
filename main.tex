@@ -5,11 +5,16 @@
 \usepackage{setspace}
 \usepackage{amsmath}
 \usepackage{graphicx}
+
+\renewcommand{\chaptername}{}
+
 \DeclareGraphicsExtensions{.pdf,.png,.jpg}
 
+\setcounter{tocdepth}{1}
 
 \begin{document}
 \doublespace
+\thispagestyle{empty}
 \begin{center}
 	REAL-TIME STEREO VISION IN WEARABLE FORM FACTOR:\\ AN EXPLORATION OF IMAGE PROCESSING ON THE RASPBERRY PI 2
 \end{center}
@@ -34,8 +39,34 @@
 	Winter 2016
 \end{center}
 
+\newpage
+\vspace{.75in}
+\begin{center}
+THESIS OF JONATHAN ROSTER APPROVED BY
+\end{center}
+\vspace{1.5in}
+\begin{center}
+\makebox[3in]{\hrulefill}Date\makebox[1.0in]{\hrulefill}\\
+YUN TIAN, PhD, GRADUATE STUDY COMMITTEE
 
+\vspace{.75in}
+
+\makebox[3in]{\hrulefill}Date\makebox[1.0in]{\hrulefill}\\
+KOSUKE IMMAMURA, PhD, GRADUATE STUDY COMMITTEE
+
+\vspace{.75in}
+
+\makebox[3in]{\hrulefill}Date\makebox[1.0in]{\hrulefill}\\
+PAUL SPREULL, MS, GRADUATE STUDY COMMITTEE
+\end{center}
+
+\singlespace
+\pagenumbering{roman}
 \tableofcontents
+\listoffigures
+\listoftables
+\pagenumbering{arabic}
+
 \chapter{Abstract}
 \input{chapters/Abstract}
 

@@ -1,5 +1,4 @@
-
-\documentclass[12]{report}
+\documentclass[chapterprefix=false, 12pt]{scrreprt}
 \usepackage[utf8]{inputenc}
 \usepackage{graphicx}
 \usepackage{setspace}
@@ -7,8 +6,11 @@
 \usepackage{graphicx}
 \usepackage{ragged2e}
 \usepackage{soul}
-
+\usepackage{titlesec}
 \usepackage{fancyhdr} 
+\usepackage{geometry}
+\geometry{lmargin=1.5in, rmargin=1in, tmargin=1in,bmargin=1in}
+
 
 \pagestyle{fancy}
 \fancyhf{}
@@ -75,6 +77,7 @@ PAUL SPREULL, MS, GRADUATE STUDY COMMITTEE
 
 
 \newpage
+\vspace*{1.5in}
 \begin{center}
 \underline{MASTER'S THESIS}\\
 \end{center}
@@ -92,12 +95,15 @@ is allowable only for scholarly purposes. \ul{It is understood, however, that an
 
 
 
-\chapter{Abstract}
+\newpage
 \input{chapters/Abstract}
 
 \tableofcontents
 \listoffigures
 \listoftables
+\newpage
+
+
 \pagenumbering{arabic}
 
 \chapter{Introduction}
@@ -121,7 +127,8 @@ is allowable only for scholarly purposes. \ul{It is understood, however, that an
 
 \appendix
 \chapter{Appendix}
-\input{chapters/Appendix}
 
+\bibliographystyle{apalike}
+\bibliography{main}
 
 \end{document}

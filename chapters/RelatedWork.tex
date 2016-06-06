@@ -1,8 +1,45 @@
+
+The field of Stereo Vision is well researched, real-time stereo vision less so. Several attempts have
+been made at performing rectification and disparity mapping in real-time or on mobile hardware.
+Little effort has been made to combine these two areas though.
 \section{Real-Time Stereo Vision}
-The area of Stereo Vision is well researched, however the real-time application of it is less so.  Sutton et al \cite{Sutton} explored Real-Time Stereo Vision on a modern pc using lower resolution images and achieved a processing speed of around 8 frames per second (fps).  Their solution utilized only the CPU to perform the calculations and was therefore quite slow.  Another possible solution involves the use of Field Programmable Gate Arrays (FPGAs).  Wang et al\cite{Wang:2} implemented a Stereo Vision system on an Altera Stratix-IV FPGA board capable of processing 1024x768 images at around 30 fps. 
-
-\section{Stereo Vision on the GPU}
-
-
+On the Real-time side, Sutton et al used consumer web-cameras to offset the computational cost
+of rectification via lower resolution. \cite{Sutton} In this research the authors determined that using low
+resolution cameras and a common pc for the time, a depth map could be rendered purely on the
+computers Central Processing Unit(CPU) at around 8 fps. Another approach, taken by Shete et al,
+was applying the process of GPU computing to high resolution image streams.\cite{Shete} In this research, the
+authors used a powerful computer and a pair of High resolution, 1920x1080 pixels, video cameras.
+By offloading the highly parallel portions of the workload to the GPU the authors were able to
+output a rectified image pair in 14.252 milliseconds, corresponding to around 70 fps. It is important
+to note that rather than using a library such as NVIDIA’s Compute Unified Device Architecture
+(CUDA), which would have been limited to only operating on NVIDIA graphics cards, The authors
+used the Open Graphics Language (OpenGL) graphics programming language to achieve their
+results. This means that their work can be portable between GPUs, provided that those GPUs
+support the minimum version of OpenGL that the authors used. The authors of this paper also
+only produced a rectified image pair, not a complete depth map.
+Another area of study on the real-time side of things is the Field Programmable Gate Array
+(FPGA). An FPGA acts as a sort of programmable hardware, allowing for custom built circuits to
+be designed and implemented without the cost of manufacturing. Wang et al implemented a Stereo
+Vision system on an Altera-Stratix FPGA board and achieved varying results.\cite{Wang} For a resolution
+of 1024x768, the authors were able to output a full depth map at 67 fps. For a higher resolution of
+1600x1200 the fps dropped to around 42. An overall comparison of FPGAs and GPUs was carried
+out by Kalarot et al. \cite{Kalarot} The authors implemented the same algorithm on an FPGA and using
+CUDA on a GPU. They found that while the FPGA performed better, the circuit created could
+fit only on the largest FPGAs available. In addition, the GPU was able to handle a much higher
+disparity range than the FPGA and was more easily scalable.
 \section{Mobile Stereo Vision}
+As far as stereo vision in a mobile form factor goes, Park et al used a common cellular phone and
+a tablet to perform rectification on both the devices CPU and GPU and compared the results.\cite{Park}
+The results they achieved, while not real-time, were promising as the hardware tested was lower
+powered than the proposed hardware for this research. A similar technique was followed by Singhal
+et al, who studied the implementation of a set of image processing algorithms on a mobile GPU.\cite{Singhal}
+These algorithms weren’t related to Stereo Vision, but the techniques used to convert them can be
+applied to this problem space quite easily. Along the same lines, Wang et al explored the conversion
+of an image infilling algorithm to run on a mobile GPU.\cite{Wang:2} A novel idea used in this research was
+the use of the Open Computing Language (OpenCL) rather than a graphics programming language
+like OpenGL or a proprietary and manufacturer bound api like CUDA.
 
+All of these approaches have validity, but for the purposes of this research the use of FPGA’s
+will be rejected due to cost and portability concerns. instead the focus will be on combining the
+techniques of the previous research, more specifically the usage of lower resolution cameras and
+GPU programming techniques and applying it to the Raspberry Pi 2.

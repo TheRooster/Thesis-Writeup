@@ -1,0 +1,6 @@
+There are many extensions possible to this research, along with many practical applications.
+\section{OpenGL Refinement}
+The techniques used for the OpenGL portion of this research could be one of the causes of the lackluster performance.  Further research could be used to determine how many vertices are required to generate a sufficient depth map, as the optimal number lies somewhere between 4 and the number of pixels in the image.  In addition, a technique could be employed that uses a distortion map generated beforehand as a texture, and simply translates samples taken of the input images based on that offset.  This would remove the need to have more than 4 vertices, and would allow the input images to be treated as textures throughout the pipeline.  These techniques could be explored to accellerate the Depth mapping process.
+
+\section{Practical Applications}
+The practical applications of this research relate back to the original problem statement.  A device such as this could output it's depth map to an array of variable pressure pads.  With these pressure pads pressed against the skin of a visually impaired person, the amount of pressure felt in a single area would be directly related to the distance of a solid object from that person.  With the proper training this device could be used to replace sight in those suffering vision impairment.

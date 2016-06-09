@@ -10,6 +10,7 @@ stereo vision. Stereo vision is the process by which a computer takes images fro
 recombines them to extract depth information. Such a process is very computationally expensive,
 and the mobility requirements demand that the device performing this computation be of a small
 size and low power consumption.
+\section{Motivation}
 It is not known, however, whether a computer of such small size and low power consumption,
 such as the recently released Raspberry Pi 2, can be made to perform stereo vision in a fast enough
 manner so as to be useful for these kinds of applications. The purpose of this research will be to
@@ -17,6 +18,5 @@ determine whether or not a Raspberry Pi 2 can output a 30 frame per second (fps)
 map. The process will involve implementing the stereo vision portion of the Open Computer Vision
 (OpenCV) library on the Raspberry Pi 2, converting the highly parallel portions of that library to
 run on the devices Graphics Processing Unit (GPU), and multi-threading any other portions of the
-library where possible.
+pipeline where possible.
 
-\section{Motivation}

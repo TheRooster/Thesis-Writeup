@@ -10,7 +10,7 @@
 \usepackage{fancyhdr} 
 \usepackage{geometry}
 \geometry{lmargin=1.5in, rmargin=1in, tmargin=1in,bmargin=1in}
-
+\DeclareOldFontCommand{\sc}{\normalfont\scshape}{\@nomath\sc}
 
 \pagestyle{fancy}
 \fancyhf{}
@@ -73,7 +73,7 @@ KOSUKE IMMAMURA, PhD, GRADUATE STUDY COMMITTEE
 \vspace{.75in}
 
 \makebox[3in]{\hrulefill} Date\makebox[1.0in]{\hrulefill}\\
-PAUL SPREULL, MS, GRADUATE STUDY COMMITTEE
+PAUL SPRUELL, PhD, GRADUATE STUDY COMMITTEE
 \end{center}
 
 
@@ -119,17 +119,20 @@ is allowable only for scholarly purposes. \ul{It is understood, however, that an
 \chapter{Methodology}
 \input{chapters/Process}
 
+\chapter{Hindrance}
+\input{chapters/Hindrance}
 
 \chapter{Results}
 \input{chapters/Results}
 
-\chapter{Hindrance}
-\input{chapters/Hindrance}
+\chapter{Future Work}
+\input{chapters/FutureWork}
 
-\appendix
-\chapter{Appendix}
 
-\bibliographystyle{apalike}
+
+\bibliographystyle{ieeetr}
 \bibliography{main}
 
+\newpage
+\input{chapters/Vita}
 \end{document}

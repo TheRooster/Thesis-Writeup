@@ -1,5 +1,41 @@
 \thispagestyle{plain}
 \section{Timings}
-640x480
-0.4253093923
-0.009556462
+As can be seen by table \ref{table:cpu}, The CPU in the Raspberry Pi is not quite up to the task of performing the rectification and depth mapping.  Even at the lowest resolution of images tested, Rectifying and Depth mapping was performed at an average of 2.35 frames per second.  Recalling that the point of this research was to verify if the Pi was able to generate a depth map at near real-time speeds.  Based solely on the results from the CPU the answer here is no, for anything approaching a useable resolution.  The GPU timings tell a slightly different story, though not much better.  As seen in table \ref{table:gpu}, on the lowest resolution tested the GPU was able to Rectify and compute a disparity map for the images at an average of 4.6 Frames per Second.  This is closer to the stated goal but still falls short.  A more interesting tale is told by the comparison of the GPU timing scale to the CPU.  While the CPU scaled nearly linearly by a factor of .5, the GPU followed a much shallower curve, scaling by around a factor of .3.  Another interesting conclusion can be made by looking at the percent speedup seen.  As can be seen in table \ref{table:percentage}, at a minimum the GPU showed a 95\% speedup over the CPU and at a maximum was over 160\% faster.  In addition, to a point, as the images grew larger the percent speedup of the gpu over the cpu was increased. 
+\begin{table}
+\label{table:cpu}
+\begin{tabular}{|l|c|c|c|}
+\hline
+\multicolumn{4}{|c|}{Baseline CPU Timings} \\ \hline
+Resolution & Ave. Time(S) & Std. Dev & FPS \\ \hline\hline
+640x480 & 0.425 & 0.00956 & 2.3512 \\ \hline
+800x600 & 0.631 & 0.02370 & 1.5837 \\ \hline
+1024x768 & 1.010 & 0.0168349772 & .909194 \\ \hline
+\end{tabular}
+\caption{Baseline CPU Results}
+\end{table}
+
+\begin{table}
+\label{table:gpu}
+\begin{tabular}{|l|c|c|c|}
+\hline
+\multicolumn{4}{|c|}{OpenGL GPU Timings} \\ \hline
+Resolution & Ave. Time(S) & Std. Dev & FPS \\ \hline\hline
+640x480 & 0.217 & 0.0102 & 4.60 \\ \hline
+800x600 & 0.324 & 0.0258 & 3.058 \\ \hline
+1024x768 & 0.430 & 0.0225 & 2.326 \\ \hline
+\end{tabular}
+\caption{OpenGL Results}
+\end{table}
+
+\begin{table}
+\label{table:percentage}
+\begin{tabular}{|l|c|c|c|}
+\hline
+\multicolumn{4}{|c|}{OpenGL GPU Timings} \\ \hline
+Resolution & CPU & GPU & \% Speedup \\ \hline\hline
+640x480 & 0.425 & 0.217 & 95\\ \hline
+800x600 & 0.631 & 0.237 & 166 \\ \hline
+1024x768 & 1.010 & 0.430 & 134 \\ \hline
+\end{tabular}
+\caption{Percent Speedup}
+\end{table}
